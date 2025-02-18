@@ -14,18 +14,14 @@ def get_registry_value(key_path, value_name, hive=winreg.HKEY_LOCAL_MACHINE):
         print(f"⚠️ レジストリキーが見つかりません: {key_path}\\{value_name}")
         return None
 
-
 # 🔹 レジストリの保存パス
 REGISTRY_PATH = r"SOFTWARE\SpeechService"
-
 # 🔹 Azure APIキー & 設定の取得
 SPEECH_SERVICE_APIKEY1 = get_registry_value(REGISTRY_PATH, "SPEECH_SERVICE_APIKEY1")
 SPEECH_SERVICE_REGION = get_registry_value(REGISTRY_PATH, "SPEECH_SERVICE_REGION")
-
 # 🔹 Azure Speech APIs
 SPEECH_SERVICE_SPEECH_STT = get_registry_value(REGISTRY_PATH, "SPEECH_SERVICE_SPEECH_STT")
 SPEECH_SERVICE_SPEECH_TTS = get_registry_value(REGISTRY_PATH, "SPEECH_SERVICE_SPEECH_TTS")
-
 # 🔹 TRANSLATOR API のエンドポイント
 SPEECH_SERVICE_TRANSLATOR_TXT = get_registry_value(REGISTRY_PATH, "SPEECH_SERVICE_TRANSLATOR_TXT")
 
@@ -60,10 +56,8 @@ def recognize_speech_from_audio(audio_file):
     :return: 認識されたテキスト または None（失敗時）
     """
     print(f"🎤 音声認識開始: {audio_file}")
-
     # 音源の再生
     play_audio(audio_file)
-
     # 音声ファイルの確認と変換
     converter = ConvertWAV(audio_file)
     if not converter.check_audio_properties():
@@ -82,21 +76,16 @@ def recognize_speech_from_audio(audio_file):
         # 言語設定（自動判別）
         source_lang, _ = get_translation_languages(audio_file)
         speech_config.speech_recognition_language = f"{source_lang}-JP" if source_lang == "ja" else "en-US"
-
         audio_config = speechsdk.audio.AudioConfig(filename=audio_file)
-
         recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
         print("🎤 音声認識中...")
         result = recognizer.recognize_once()
-
         print(f"🟡 STT 結果: {result.reason}")
         if result.reason == speechsdk.ResultReason.RecognizedSpeech:
             print(f"✅ 認識結果: {result.text}")
             return result.text
-
     except Exception as e:
         print(f"❌ STT処理中にエラーが発生: {e}")
-
     return None
 
 
@@ -154,17 +143,22 @@ def text_to_speech(text, audio_file):
 
 # 🔹 メイン処理
 def main():
-    audio_file = "sample_en.wav"  # 🔹 ファイル名に "_jp" または "_en" を含める
+
+    # wavファイル
+    audio_file = "sample_en.wav"
     print(f"📢 使用する音声ファイル: {audio_file}")
 
+    # 🔹 STT: 音声 → テキスト
     recognized_text = recognize_speech_from_audio(audio_file)
     if not recognized_text:
         return
 
+    # 🔹 翻訳API
     translated_text = translate_text(recognized_text, audio_file)
     if not translated_text:
         return
 
+    # 🔹 TTS: テキスト → 音声
     text_to_speech(translated_text, audio_file)
 
 
